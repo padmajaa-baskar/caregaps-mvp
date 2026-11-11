@@ -1,58 +1,73 @@
-// CareGaps CCM — care-team dashboard (demo / synthetic data).
-// Static mock data so evaluators understand the product without a live call.
+import {
+  CalendarCheck,
+  CheckCircle2,
+  ClipboardList,
+  PhoneMissed,
+  PhoneOutgoing,
+} from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { cn } from "@/lib/utils";
+
+// Care-team dashboard. Synthetic data — the clinical engine and scoring live in
+// the CARE plugin; this surface is the care team's view of outreach + review.
 
 const KPIS = [
-  { n: "128", l: "Open care gaps", s: "diabetes · asthma · depression" },
-  { n: "86", l: "Calls placed this week", s: "+14 vs last week" },
-  { n: "61", l: "Check-ins completed", s: "71% of reached" },
-  { n: "47", l: "Gaps closed", s: "booked or completed" },
-  { n: "9", l: "Flagged for call-back", s: "routed to care team" },
-];
+  { label: "Open care gaps", value: "128", sub: "across 3 conditions", icon: ClipboardList },
+  { label: "Calls this week", value: "86", sub: "+14 vs last week", icon: PhoneOutgoing },
+  { label: "Check-ins completed", value: "61", sub: "71% of reached", icon: CheckCircle2 },
+  { label: "Gaps closed", value: "47", sub: "booked or completed", icon: CalendarCheck },
+  { label: "Needs call-back", value: "9", sub: "routed to care team", icon: PhoneMissed },
+] as const;
 
 const FUNNEL = [
-  { l: "Reached", v: 86, pct: 100, c: "#2e7d6b" },
-  { l: "Completed check-in", v: 61, pct: 71, c: "#4f9a88" },
-  { l: "Gap closed / booked", v: 47, pct: 55, c: "#6fb3a3" },
-  { l: "Flagged for call-back", v: 9, pct: 10, c: "#d99a2b" },
+  { label: "Reached", value: 86, pct: 100, fill: "bg-primary" },
+  { label: "Completed check-in", value: 61, pct: 71, fill: "bg-primary/75" },
+  { label: "Gap closed / booked", value: 47, pct: 55, fill: "bg-primary/55" },
+  { label: "Flagged for call-back", value: 9, pct: 10, fill: "bg-amber-400" },
 ];
 
-const WEEK = [
-  { d: "Mon", v: 12 }, { d: "Tue", v: 18 }, { d: "Wed", v: 15 },
-  { d: "Thu", v: 14 }, { d: "Fri", v: 11 }, { d: "Sat", v: 9 }, { d: "Sun", v: 7 },
-];
+type Tone = "crisis" | "critical" | "escalated" | "completed" | "noanswer" | "callback" | "routine";
 
-type Pill = "crisis" | "critical" | "escalated" | "routine" | "done" | "booked" | "noanswer" | "callback";
-
-const QUEUE: { name: string; cond: string; result: string; flag: string; flagType: Pill; when: string }[] = [
-  { name: "Rahul Menon", cond: "Depression · PHQ-9", result: "Crisis pathway — item 9 endorsed", flag: "Crisis — routed now", flagType: "crisis", when: "3h ago" },
-  { name: "Asha Pillai", cond: "Asthma · ACT", result: "ACT 5 / 25 — very poorly controlled", flag: "Reliever overuse · critical", flagType: "critical", when: "2h ago" },
-  { name: "Vikram Shah", cond: "Asthma · ACT", result: "ACT 13 / 25 — poorly controlled", flag: "Escalated", flagType: "escalated", when: "5h ago" },
-  { name: "Meena Rao", cond: "Depression · PHQ-9", result: "PHQ-9 8 / 27 — mild", flag: "Routine", flagType: "routine", when: "1d ago" },
-  { name: "Imran Qureshi", cond: "Asthma · ACT", result: "ACT 19 / 25 — well controlled", flag: "No action", flagType: "routine", when: "1d ago" },
-];
-
-const LOG: { name: string; cond: string; status: string; statusType: Pill; dur: string; when: string }[] = [
-  { name: "Asha Pillai", cond: "Asthma", status: "Completed", statusType: "done", dur: "4:12", when: "2h ago" },
-  { name: "Rahul Menon", cond: "Depression", status: "Crisis → transferred", statusType: "crisis", dur: "3:48", when: "3h ago" },
-  { name: "Sana Khan", cond: "Asthma", status: "No answer", statusType: "noanswer", dur: "—", when: "4h ago" },
-  { name: "Vikram Shah", cond: "Asthma", status: "Completed", statusType: "done", dur: "5:01", when: "5h ago" },
-  { name: "Deepa Nair", cond: "Diabetes (pilot)", status: "Call-back requested", statusType: "callback", dur: "2:30", when: "6h ago" },
-  { name: "Imran Qureshi", cond: "Asthma", status: "Completed", statusType: "done", dur: "3:20", when: "1d ago" },
-  { name: "Arjun Das", cond: "Asthma", status: "No answer", statusType: "noanswer", dur: "—", when: "1d ago" },
-];
-
-const PILL_STYLE: Record<Pill, { bg: string; fg: string }> = {
-  crisis: { bg: "#f6e0dd", fg: "#9a3328" },
-  critical: { bg: "#fbe9d8", fg: "#9a5a12" },
-  escalated: { bg: "#fbf0d6", fg: "#8a6a1e" },
-  routine: { bg: "#eef1ef", fg: "#5b6560" },
-  done: { bg: "#dcefe8", fg: "#1f6b58" },
-  booked: { bg: "#dcefe8", fg: "#1f6b58" },
-  noanswer: { bg: "#eef1ef", fg: "#6b756f" },
-  callback: { bg: "#fbf0d6", fg: "#8a6a1e" },
+const TONE: Record<Tone, string> = {
+  crisis: "bg-destructive/10 text-destructive border-destructive/20",
+  critical: "bg-amber-100 text-amber-800 border-amber-200",
+  escalated: "bg-amber-50 text-amber-700 border-amber-200",
+  completed: "bg-primary/10 text-primary border-primary/20",
+  callback: "bg-amber-100 text-amber-800 border-amber-200",
+  noanswer: "bg-muted text-muted-foreground border-border",
+  routine: "bg-muted text-muted-foreground border-border",
 };
 
-const TRANSCRIPT = [
+function Status({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+  return (
+    <Badge variant="outline" className={cn(TONE[tone])}>
+      {children}
+    </Badge>
+  );
+}
+
+const QUEUE: { name: string; cond: string; result: string; flag: string; tone: Tone; when: string }[] = [
+  { name: "Rahul Menon", cond: "Depression · PHQ-9", result: "Crisis pathway — item 9 endorsed", flag: "Crisis", tone: "crisis", when: "3h ago" },
+  { name: "Asha Pillai", cond: "Asthma · ACT", result: "ACT 5 / 25 — very poorly controlled", flag: "Reliever overuse", tone: "critical", when: "2h ago" },
+  { name: "Vikram Shah", cond: "Asthma · ACT", result: "ACT 13 / 25 — poorly controlled", flag: "Escalated", tone: "escalated", when: "5h ago" },
+  { name: "Meena Rao", cond: "Depression · PHQ-9", result: "PHQ-9 8 / 27 — mild", flag: "Routine", tone: "routine", when: "1d ago" },
+  { name: "Imran Qureshi", cond: "Asthma · ACT", result: "ACT 19 / 25 — well controlled", flag: "No action", tone: "routine", when: "1d ago" },
+];
+
+const LOG: { name: string; cond: string; status: string; tone: Tone; dur: string; when: string }[] = [
+  { name: "Asha Pillai", cond: "Asthma", status: "Completed", tone: "completed", dur: "4:12", when: "2h ago" },
+  { name: "Rahul Menon", cond: "Depression", status: "Transferred", tone: "crisis", dur: "3:48", when: "3h ago" },
+  { name: "Sana Khan", cond: "Asthma", status: "No answer", tone: "noanswer", dur: "—", when: "4h ago" },
+  { name: "Vikram Shah", cond: "Asthma", status: "Completed", tone: "completed", dur: "5:01", when: "5h ago" },
+  { name: "Deepa Nair", cond: "Diabetes", status: "Call-back", tone: "callback", dur: "2:30", when: "6h ago" },
+  { name: "Imran Qureshi", cond: "Asthma", status: "Completed", tone: "completed", dur: "3:20", when: "1d ago" },
+  { name: "Arjun Das", cond: "Asthma", status: "No answer", tone: "noanswer", dur: "—", when: "1d ago" },
+];
+
+const TRANSCRIPT: [string, string][] = [
   ["Agent", "In the past 4 weeks, how much of the time did your asthma keep you from getting as much done at work, school or at home?"],
   ["Asha", "Pretty much all the time, honestly."],
   ["Agent", "During the past 4 weeks, how often have you had shortness of breath?"],
@@ -62,174 +77,186 @@ const TRANSCRIPT = [
   ["Agent", "Thank you. A clinician will review this and be in touch — nothing has been decided or prescribed."],
 ];
 
-function Pill({ type, children }: { type: Pill; children: React.ReactNode }) {
-  const s = PILL_STYLE[type];
-  return <span className="pill" style={{ background: s.bg, color: s.fg }}>{children}</span>;
-}
-
-export default function Dashboard() {
-  const max = Math.max(...WEEK.map((w) => w.v));
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="wrap">
-      <style>{CSS}</style>
-
-      <header className="topbar">
-        <div>
-          <div className="kick">CareGaps CCM</div>
-          <h1>Care-team dashboard</h1>
-          <div className="sub">Sunrise Community Clinic · chronic-care follow-up</div>
-        </div>
-        <div className="badges">
-          <span className="demo">● Demo · synthetic data</span>
-          <a className="btn" href="/call">Live web call (beta)</a>
-        </div>
-      </header>
-
-      <section className="kpis">
-        {KPIS.map((k) => (
-          <div className="kpi" key={k.l}>
-            <div className="n">{k.n}</div>
-            <div className="l">{k.l}</div>
-            <div className="s">{k.s}</div>
-          </div>
-        ))}
-      </section>
-
-      <section className="grid2">
-        <div className="panel">
-          <h2>This week&apos;s outreach</h2>
-          {FUNNEL.map((f) => (
-            <div className="frow" key={f.l}>
-              <div className="flab">{f.l}</div>
-              <div className="ftrack"><div className="ffill" style={{ width: f.pct + "%", background: f.c }} /></div>
-              <div className="fval">{f.v} <span>· {f.pct}%</span></div>
-            </div>
-          ))}
-          <p className="note">Illustrative pilot figures.</p>
-        </div>
-
-        <div className="panel">
-          <h2>Calls per day</h2>
-          <div className="bars">
-            {WEEK.map((w) => (
-              <div className="bcol" key={w.d}>
-                <div className="bbar" style={{ height: Math.round((w.v / max) * 120) + "px" }} />
-                <div className="bval">{w.v}</div>
-                <div className="bday">{w.d}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="panel">
-        <h2>Review queue <span className="count">{QUEUE.length} drafts awaiting clinician sign-off</span></h2>
-        <table>
-          <thead><tr><th>Patient</th><th>Instrument</th><th>Result (scored by the system)</th><th>Flag</th><th>When</th></tr></thead>
-          <tbody>
-            {QUEUE.map((q) => (
-              <tr key={q.name}>
-                <td className="strong">{q.name}</td>
-                <td>{q.cond}</td>
-                <td>{q.result}</td>
-                <td><Pill type={q.flagType}>{q.flag}</Pill></td>
-                <td className="muted">{q.when}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="note">Nothing reaches the patient&apos;s chart until a clinician approves. An unacknowledged critical flag blocks approval; a crisis drafts zero medication.</p>
-      </section>
-
-      <section className="grid2">
-        <div className="panel">
-          <h2>Recent calls</h2>
-          <table>
-            <thead><tr><th>Patient</th><th>Condition</th><th>Status</th><th>Length</th><th>When</th></tr></thead>
-            <tbody>
-              {LOG.map((r) => (
-                <tr key={r.name + r.when}>
-                  <td className="strong">{r.name}</td>
-                  <td>{r.cond}</td>
-                  <td><Pill type={r.statusType}>{r.status}</Pill></td>
-                  <td className="muted">{r.dur}</td>
-                  <td className="muted">{r.when}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="panel">
-          <h2>Sample check-in — Asha Pillai</h2>
-          <div className="transcript">
-            {TRANSCRIPT.map((t, i) => (
-              <p key={i}><b style={{ color: t[0] === "Agent" ? "#2e7d6b" : "#223029" }}>{t[0]}:</b> {t[1]}</p>
-            ))}
-          </div>
-          <div className="outputs">
-            <div className="orow"><span>Score</span><b>ACT 5 / 25 — very poorly controlled</b></div>
-            <div className="orow"><span>Safety screen</span><b>Reliever overuse (~9 canisters/yr) — <span style={{ color: "#9a3328" }}>critical</span></b></div>
-            <div className="orow"><span>Proposed step</span><b>Controller step-up review <span className="muted">(proposal — clinician binds the product)</span></b></div>
-            <div className="orow"><span>Patient said</span><b>&ldquo;breathless on the stairs&rdquo; · &ldquo;inhaler runs out quickly&rdquo;</b></div>
-          </div>
-          <p className="note">The agent only collects answers. The score, safety screen and proposed step are computed server-side; a clinician signs off before anything is written to CARE.</p>
-        </div>
-      </section>
-
-      <footer className="foot">
-        CareGaps CCM · Team 2care AI · built on OHC Network CARE + Sarvam · prototype on synthetic data, not for clinical use.
-      </footer>
-    </div>
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
+    </span>
   );
 }
 
-const CSS = `
-*{box-sizing:border-box}
-.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 60px;color:#223029}
-.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px}
-.kick{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#2e7d6b;font-weight:800}
-.topbar h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.5px}
-.sub{color:#6b756f;font-size:14px}
-.badges{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.demo{background:#eef5f2;color:#2e7d6b;border:1px solid #cfe0d9;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700}
-.btn{background:#2e7d6b;color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;text-decoration:none}
-.kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
-.kpi{flex:1;min-width:170px;background:#fff;border:1px solid #e3ded5;border-radius:14px;padding:16px 18px}
-.kpi .n{font-size:34px;font-weight:800;color:#2e7d6b;letter-spacing:-1px;line-height:1}
-.kpi .l{font-size:14px;font-weight:600;margin-top:6px}
-.kpi .s{font-size:12px;color:#6b756f;margin-top:3px}
-.grid2{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px}
-.grid2>.panel{flex:1;min-width:320px}
-.panel{background:#fff;border:1px solid #e3ded5;border-radius:16px;padding:20px 22px;margin-bottom:18px}
-.panel h2{font-size:17px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.count,.panel h2 .count{font-size:12px;font-weight:600;color:#6b756f}
-.frow{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.flab{width:150px;font-size:13px;flex-shrink:0}
-.ftrack{flex:1;height:22px;background:#eef1ef;border-radius:6px;overflow:hidden}
-.ffill{height:100%;border-radius:6px}
-.fval{width:78px;text-align:right;font-size:13px;font-weight:700;color:#255f52}
-.fval span{color:#6b756f;font-weight:500}
-.note{font-size:12px;color:#8a9088;margin-top:12px;font-style:italic}
-.bars{display:flex;align-items:flex-end;gap:14px;height:170px;padding-top:10px}
-.bcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px}
-.bbar{width:70%;background:#2e7d6b;border-radius:5px 5px 0 0}
-.bval{font-size:12px;font-weight:700;color:#255f52}
-.bday{font-size:12px;color:#6b756f}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#6b756f;padding:8px 10px;border-bottom:1px solid #e3ded5}
-td{padding:11px 10px;border-bottom:1px solid #f0ece4}
-tr:last-child td{border-bottom:0}
-.strong{font-weight:700}
-.muted{color:#6b756f}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
-.transcript{background:#f8f6f1;border-radius:10px;padding:14px 16px;font-size:13.5px;line-height:1.5}
-.transcript p{margin:0 0 8px}
-.transcript p:last-child{margin:0}
-.outputs{margin-top:14px;border:1px solid #e3ded5;border-radius:10px;overflow:hidden}
-.orow{display:flex;gap:12px;padding:10px 14px;font-size:13.5px;border-bottom:1px solid #f0ece4}
-.orow:last-child{border-bottom:0}
-.orow span{width:110px;flex-shrink:0;color:#6b756f;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding-top:2px}
-.foot{text-align:center;color:#8a9088;font-size:12px;margin-top:26px}
-@media(max-width:560px){.flab{width:110px}.orow span{width:90px}}
-`;
+const TH = "py-2 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
+const TD = "py-3 align-top";
+
+export default function Dashboard() {
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs text-muted-foreground">Sunrise Community Clinic</p>
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight">Chronic-care follow-up</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-muted-foreground">Synthetic data</Badge>
+          <a
+            href="/call"
+            className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Web call
+          </a>
+        </div>
+      </div>
+
+      {/* Facts line */}
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border px-3 py-2 text-xs">
+        <Fact label="Conditions" value="Asthma · Depression · Diabetes (pilot)" />
+        <Fact label="Instruments" value="ACT · PHQ-9" />
+        <Fact label="Window" value="This week" />
+      </div>
+
+      {/* KPIs */}
+      <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        {KPIS.map((k) => (
+          <KpiCard key={k.label} label={k.label} value={k.value} sub={k.sub} icon={k.icon} />
+        ))}
+      </div>
+
+      {/* Outreach funnel */}
+      <Card className="mt-5">
+        <CardHeader>
+          <CardTitle className="text-sm">This week&apos;s outreach</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {FUNNEL.map((f) => (
+            <div key={f.label} className="flex items-center gap-3">
+              <div className="w-44 shrink-0 text-sm">{f.label}</div>
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                <div className={cn("h-full rounded-full", f.fill)} style={{ width: `${f.pct}%` }} />
+              </div>
+              <div className="w-20 shrink-0 text-right text-sm tabular-nums">
+                <span className="font-medium">{f.value}</span>{" "}
+                <span className="text-muted-foreground">{f.pct}%</span>
+              </div>
+            </div>
+          ))}
+          <p className="pt-1 text-xs text-muted-foreground">Illustrative pilot figures.</p>
+        </CardContent>
+      </Card>
+
+      {/* Review queue */}
+      <Card className="mt-5">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-sm">Review queue</CardTitle>
+            <span className="text-xs text-muted-foreground">{QUEUE.length} drafts awaiting clinician sign-off</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  <th className={TH}>Patient</th>
+                  <th className={TH}>Instrument</th>
+                  <th className={TH}>Result (scored server-side)</th>
+                  <th className={TH}>Flag</th>
+                  <th className={cn(TH, "text-right")}>When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {QUEUE.map((q) => (
+                  <tr key={q.name} className="border-t">
+                    <td className={cn(TD, "font-medium")}>{q.name}</td>
+                    <td className={cn(TD, "text-muted-foreground")}>{q.cond}</td>
+                    <td className={TD}>{q.result}</td>
+                    <td className={TD}><Status tone={q.tone}>{q.flag}</Status></td>
+                    <td className={cn(TD, "text-right text-muted-foreground tabular-nums")}>{q.when}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="pt-3 text-xs text-muted-foreground">
+            Nothing reaches the patient&apos;s chart until a clinician approves. An unacknowledged critical flag blocks approval; a crisis drafts no medication.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Recent calls + sample check-in */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Recent calls</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className={TH}>Patient</th>
+                    <th className={TH}>Condition</th>
+                    <th className={TH}>Status</th>
+                    <th className={cn(TH, "text-right")}>Length</th>
+                    <th className={cn(TH, "text-right")}>When</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {LOG.map((r) => (
+                    <tr key={r.name + r.when} className="border-t">
+                      <td className={cn(TD, "font-medium")}>{r.name}</td>
+                      <td className={cn(TD, "text-muted-foreground")}>{r.cond}</td>
+                      <td className={TD}><Status tone={r.tone}>{r.status}</Status></td>
+                      <td className={cn(TD, "text-right text-muted-foreground tabular-nums")}>{r.dur}</td>
+                      <td className={cn(TD, "text-right text-muted-foreground tabular-nums")}>{r.when}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-sm">Sample check-in — Asha Pillai</CardTitle>
+              <Status tone="critical">ACT 5 / 25</Status>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="rounded-lg bg-muted/60 p-3 text-[13px] leading-relaxed">
+              {TRANSCRIPT.map(([who, text], i) => (
+                <p key={i} className={cn(i > 0 && "mt-2")}>
+                  <span className={cn("font-medium", who === "Agent" ? "text-primary" : "text-foreground")}>{who}: </span>
+                  <span className="text-foreground/90">{text}</span>
+                </p>
+              ))}
+            </div>
+            <div className="overflow-hidden rounded-lg border text-sm">
+              {[
+                ["Score", <>ACT 5 / 25 — very poorly controlled</>],
+                ["Safety", <>Reliever overuse (~9 canisters/yr) — <span className="text-destructive">critical</span></>],
+                ["Proposed", <>Controller step-up review <span className="text-muted-foreground">(proposal — clinician binds the product)</span></>],
+                ["Noted", <>&ldquo;breathless on the stairs&rdquo; · &ldquo;inhaler runs out quickly&rdquo;</>],
+              ].map(([k, v], i) => (
+                <div key={i} className={cn("flex gap-3 px-3 py-2.5", i > 0 && "border-t")}>
+                  <span className="w-20 shrink-0 pt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{k}</span>
+                  <span className="text-foreground">{v}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The agent only collects answers. The score, safety screen and proposed step are computed server-side; a clinician signs off before anything is written to CARE.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <p className="mt-8 text-center text-xs text-muted-foreground">
+        CareGaps CCM · built on OHC Network CARE + Sarvam · prototype on synthetic data, not for clinical use.
+      </p>
+    </div>
+  );
+}

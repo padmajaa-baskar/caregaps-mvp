@@ -2,20 +2,26 @@
   "name": "caregaps-mvp",
   "private": true,
   "version": "0.1.0",
-  "description": "CareGaps CCM — login-gated live web-call demo for evaluators",
+  "description": "CareGaps CCM — care-team dashboard + demo",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.544.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sarvam-conv-ai-sdk": "0.0.42"
+    "sarvam-conv-ai-sdk": "0.0.42",
+    "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/react": "19.3.0",
+    "tailwindcss": "^4.1.0",
     "typescript": "^6.0.3"
   }
 }
