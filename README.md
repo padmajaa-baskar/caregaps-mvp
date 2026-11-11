@@ -2,6 +2,10 @@
 
 **An AI follow-up coordinator that closes chronic-care gaps between visits.**
 
+> ### 🔗 Live demo — care-team dashboard: **https://caregaps-mvp.vercel.app**
+> Login: `evaluator` / `caregaps2026`
+> *(This is the current demo URL. An earlier deployment link may show a superseded version — this one always shows the latest.)*
+
 CareGaps CCM finds patients overdue for a doctor-set follow-up, calls them in plain language,
 works through a validated check-in (ACT for asthma, PHQ-9 for depression), scores the answers
 **server-side**, runs a safety screen, and produces a **clinician-reviewed, coded record** inside
